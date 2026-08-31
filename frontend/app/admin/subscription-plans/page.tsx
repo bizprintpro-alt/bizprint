@@ -50,15 +50,15 @@ export default function AdminPlanManagement() {
 
   const show = (m: string) => { setToast(m); setTimeout(() => setToast(''), 2500) }
 
-  const load = () => {
-    setLoading(true)
+  const fetchPlans = () =>
     apiFetch('/admin/subscription-plans')
       .then((d: any) => setPlans(Array.isArray(d) ? d : []))
       .catch(() => {})
       .finally(() => setLoading(false))
-  }
 
-  useEffect(load, [])
+  const load = () => { setLoading(true); void fetchPlans() }
+
+  useEffect(() => { void fetchPlans() }, [])
 
   const handleSave = async () => {
     if (!editing.name || !editing.slug) { show('Нэр, slug шаардлагатай'); return }

@@ -93,13 +93,13 @@ export default function AdminWebhooksPage() {
   const [timeout_, setTimeout_] = useState(10)
   const [maxRetries, setMaxRetries] = useState(5)
 
-  const load = async () => {
-    setLoading(true)
-    try { const d = await apiFetch<any>('/delivery/webhooks/list'); setWebhooks(Array.isArray(d) ? d : []) }
-    catch { setWebhooks([]) }
-    setLoading(false)
-  }
-  useEffect(() => { load() }, [])
+  const fetchWebhooks = () =>
+    apiFetch<any>('/delivery/webhooks/list')
+      .then((d: any) => setWebhooks(Array.isArray(d) ? d : []))
+      .catch(() => setWebhooks([]))
+      .finally(() => setLoading(false))
+  const load = async () => { setLoading(true); await fetchWebhooks() }
+  useEffect(() => { void fetchWebhooks() }, [])
 
   const resetForm = () => {
     setName(''); setDescription(''); setIntegrationType('webhook'); setUrl(''); setSecret('')

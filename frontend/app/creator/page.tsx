@@ -25,12 +25,6 @@ export default function CreatorDashboard() {
   useEffect(() => {
     const token = getToken()
     if (!token) { router.push('/login'); return }
-    // Read capabilities from localStorage user
-    try {
-      const u = JSON.parse(localStorage.getItem('user') || '{}')
-      setCapabilities(u.creator_capabilities || [])
-    } catch {}
-
     Promise.all([
       apiFetch<any>('/creator/earnings').catch(() => null),
       apiFetch<any[]>('/creator/projects').catch(() => []),
@@ -38,6 +32,11 @@ export default function CreatorDashboard() {
       apiFetch<any[]>('/creator/live/schedule').catch(() => []),
       apiFetch<any[]>('/creator/live/available').catch(() => []),
     ]).then(([e, p, j, lb, lj]) => {
+      // Read capabilities from localStorage user
+      try {
+        const u = JSON.parse(localStorage.getItem('user') || '{}')
+        setCapabilities(u.creator_capabilities || [])
+      } catch {}
       setEarnings(e)
       setProjects(Array.isArray(p) ? p : [])
       setJobs(Array.isArray(j) ? j : [])

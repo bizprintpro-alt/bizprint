@@ -90,42 +90,45 @@ export default function AdminSupportPage() {
   // Counts per status
   const [counts, setCounts] = useState<Record<string, number>>({})
 
-  useEffect(() => { fetchTickets() }, [statusFilter])
-
-  useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
-  }, [selected?.messages])
-
-  async function fetchTickets() {
-    setLoading(true)
-    try {
-      const data = await apiFetch<any>(`/admin/support-tickets?status=${statusFilter}`)
-      const items: Ticket[] = data.items || []
-      setTickets(items)
-      setTotal(data.total || items.length)
-
-      // Also fetch all to get counts
-      if (statusFilter) {
-        const allData = await apiFetch<any>('/admin/support-tickets?status=')
-        const allItems: Ticket[] = allData?.items || (Array.isArray(allData) ? allData : [])
-        const c: Record<string, number> = { '': allItems.length }
-        allItems.forEach(t => { c[t.status] = (c[t.status] || 0) + 1 })
-        setCounts(c)
-      } else {
-        const c: Record<string, number> = { '': items.length }
-        items.forEach(t => { c[t.status] = (c[t.status] || 0) + 1 })
-        setCounts(c)
-      }
-    } catch {
-      showToast('Тикетүүдийг ачаалахад алдаа гарлаа', 'err')
-    }
-    setLoading(false)
-  }
-
   function showToast(msg: string, type: 'ok' | 'err' = 'ok') {
     setToast({ msg, type })
     setTimeout(() => setToast(null), 3200)
   }
+
+  function loadTickets() {
+    return apiFetch<any>(`/admin/support-tickets?status=${statusFilter}`)
+      .then(async (data: any) => {
+        const items: Ticket[] = data.items || []
+        setTickets(items)
+        setTotal(data.total || items.length)
+
+        // Also fetch all to get counts
+        if (statusFilter) {
+          const allData = await apiFetch<any>('/admin/support-tickets?status=')
+          const allItems: Ticket[] = allData?.items || (Array.isArray(allData) ? allData : [])
+          const c: Record<string, number> = { '': allItems.length }
+          allItems.forEach(t => { c[t.status] = (c[t.status] || 0) + 1 })
+          setCounts(c)
+        } else {
+          const c: Record<string, number> = { '': items.length }
+          items.forEach(t => { c[t.status] = (c[t.status] || 0) + 1 })
+          setCounts(c)
+        }
+      })
+      .catch(() => showToast('Тикетүүдийг ачаалахад алдаа гарлаа', 'err'))
+      .finally(() => setLoading(false))
+  }
+
+  function fetchTickets() {
+    setLoading(true)
+    return loadTickets()
+  }
+
+  useEffect(() => { void loadTickets() }, [statusFilter])
+
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
+  }, [selected?.messages])
 
   async function handleReply() {
     if (!selected || !replyText.trim()) return

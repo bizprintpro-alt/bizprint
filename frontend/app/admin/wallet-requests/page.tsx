@@ -54,30 +54,33 @@ export default function AdminWalletRequestsPage() {
   const [toast, setToast] = useState<{ msg: string; type: 'ok' | 'err' } | null>(null)
   const [stats, setStats] = useState({ pending: 0, approved: 0, rejected: 0, total_pending_amount: 0 })
 
-  useEffect(() => { fetchRequests() }, [])
-
-  async function fetchRequests() {
-    setLoading(true)
-    try {
-      const res = await apiFetch<any>(`/wallet/withdraw-requests`)
-      const data: WithdrawRequest[] = res
-      setRequests(data)
-      setStats({
-        pending:              data.filter(r => r.status === 'pending').length,
-        approved:             data.filter(r => r.status === 'approved').length,
-        rejected:             data.filter(r => r.status === 'rejected').length,
-        total_pending_amount: data.filter(r => r.status === 'pending').reduce((s, r) => s + r.amount, 0),
-      })
-    } catch {
-      showToast('Серверээс уншихад алдаа гарлаа', 'err')
-    }
-    setLoading(false)
-  }
-
   function showToast(msg: string, type: 'ok' | 'err' = 'ok') {
     setToast({ msg, type })
     setTimeout(() => setToast(null), 3200)
   }
+
+  function loadRequests() {
+    return apiFetch<any>(`/wallet/withdraw-requests`)
+      .then((res: any) => {
+        const data: WithdrawRequest[] = res
+        setRequests(data)
+        setStats({
+          pending:              data.filter(r => r.status === 'pending').length,
+          approved:             data.filter(r => r.status === 'approved').length,
+          rejected:             data.filter(r => r.status === 'rejected').length,
+          total_pending_amount: data.filter(r => r.status === 'pending').reduce((s, r) => s + r.amount, 0),
+        })
+      })
+      .catch(() => showToast('Серверээс уншихад алдаа гарлаа', 'err'))
+      .finally(() => setLoading(false))
+  }
+
+  function fetchRequests() {
+    setLoading(true)
+    return loadRequests()
+  }
+
+  useEffect(() => { void loadRequests() }, [])
 
   async function approveRequest(req: WithdrawRequest) {
     setProcessing(true)

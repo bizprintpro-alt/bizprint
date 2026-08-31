@@ -92,13 +92,13 @@ export default function CreatorProfilePage() {
   const [packages, setPackages] = useState<Package[]>(DEMO_PACKAGES)
   const [portfolio, setPortfolio] = useState<PortfolioItem[]>(DEMO_PORTFOLIO)
   const [reviews, setReviews] = useState<Review[]>(DEMO_REVIEWS)
-  const [loading, setLoading] = useState(true)
+  const [loadedId, setLoadedId] = useState<string | null>(null)
+  const loading = loadedId !== params.id
   const [activeTab, setActiveTab] = useState<'portfolio' | 'packages' | 'about' | 'reviews'>('portfolio')
   const [orderOpen, setOrderOpen] = useState(false)
 
   useEffect(() => {
     if (!params.id) return
-    setLoading(true)
     Promise.all([
       apiFetch<any>(`/marketplace/creators/${params.id}`, { auth: false }).catch(() => null),
       apiFetch<any[]>(`/marketplace/creators/${params.id}/portfolio`, { auth: false }).catch(() => []),
@@ -107,7 +107,7 @@ export default function CreatorProfilePage() {
       if (c) setCreator(c)
       if (Array.isArray(p) && p.length > 0) setPortfolio(p)
       if (Array.isArray(r) && r.length > 0) setReviews(r)
-    }).finally(() => setLoading(false))
+    }).finally(() => setLoadedId(params.id as string))
   }, [params.id])
 
   const level = LEVEL_CONFIG[creator.level] || LEVEL_CONFIG.starter

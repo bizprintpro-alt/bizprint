@@ -26,30 +26,36 @@ export default function CampaignsPage() {
   const show = (m: string) => { setToast(m); setTimeout(() => setToast(''), 2500) }
   const baseUrl = typeof window !== 'undefined' ? window.location.origin : ''
 
-  const load = async () => {
-    setLoading(true)
+  const loadCampaigns = () => {
     const token = localStorage.getItem('access_token') || localStorage.getItem('token')
-    if (!token) { setLoading(false); return }
     const h = { Authorization: `Bearer ${token}` }
     const sf = (p: string) => fetch(`${API}${p}`, { headers: h }).then(r => r.ok ? r.json() : null).catch(() => null)
-    const [progs, u] = await Promise.all([
-      sf('/loyalty/my-programs'),
-      sf('/subscription/usage'),
-    ])
-    const progList = Array.isArray(progs) ? progs : []
-    setPrograms(progList)
-    setUsage(u)
-    // Load stats for each program
-    const statsMap: Record<string, any> = {}
-    await Promise.all(progList.map(async (p: any) => {
-      const s = await sf(`/loyalty/my-programs/${p.id}/stats`)
-      if (s) statsMap[p.id] = s
-    }))
-    setStats(statsMap)
-    setLoading(false)
+    const request: Promise<[any, any]> = token
+      ? Promise.all([sf('/loyalty/my-programs'), sf('/subscription/usage')]) as Promise<[any, any]>
+      : Promise.resolve([null, null])
+    return request
+      .then(async ([progs, u]) => {
+        if (!token) return
+        const progList = Array.isArray(progs) ? progs : []
+        setPrograms(progList)
+        setUsage(u)
+        // Load stats for each program
+        const statsMap: Record<string, any> = {}
+        await Promise.all(progList.map(async (p: any) => {
+          const s = await sf(`/loyalty/my-programs/${p.id}/stats`)
+          if (s) statsMap[p.id] = s
+        }))
+        setStats(statsMap)
+      })
+      .finally(() => setLoading(false))
   }
 
-  useEffect(() => { load() }, [])
+  const load = () => {
+    setLoading(true)
+    return loadCampaigns()
+  }
+
+  useEffect(() => { void loadCampaigns() }, [])
 
   const campaignUsage = usage?.loyalty_campaigns
   const canCreate = !campaignUsage || campaignUsage.current < campaignUsage.effective_max

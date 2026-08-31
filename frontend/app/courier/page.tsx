@@ -50,6 +50,13 @@ export default function CourierDashboard() {
   const [selected, setSelected] = useState<Order | null>(null)
   const [toast, setToast]       = useState<{ msg: string; ok: boolean } | null>(null)
 
+  function fetchOrders() {
+    return apiFetch<any>('/admin/orders')
+      .then((r: any) => setOrders(r))
+      .catch(() => {})
+      .finally(() => setLoading(false))
+  }
+
   useEffect(() => {
     if (!authLoading && user) fetchOrders()
   }, [authLoading, user])
@@ -61,15 +68,6 @@ export default function CourierDashboard() {
     onChange: () => fetchOrders(),
     enabled: !!user?.id,
   })
-
-  async function fetchOrders() {
-    setLoading(true)
-    try {
-      const r = await apiFetch<any>('/admin/orders')
-      setOrders(r)
-    } catch {}
-    setLoading(false)
-  }
 
   function showToast(msg: string, ok = true) {
     setToast({ msg, ok })

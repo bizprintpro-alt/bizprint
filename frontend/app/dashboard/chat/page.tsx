@@ -75,18 +75,17 @@ export default function CustomerChatPage() {
     load()
   }, [])
 
+  function fetchMessages(userId: string) {
+    if (!me) return Promise.resolve()
+    return apiFetch<any>(`/chat/messages?userId=${userId}&me=${me.id}`)
+      .then((d: any) => setMessages(Array.isArray(d) ? d.map(mapMsg) : []))
+  }
+
   // messages when selected
   useEffect(() => {
     if (!selected || !me) return
     fetchMessages(selected.id)
   }, [selected, me])
-
-  async function fetchMessages(userId: string) {
-    if (!me) return
-    const d: any[] = await apiFetch<any>(`/chat/messages?userId=${userId}&me=${me.id}`)
-    if (!Array.isArray(d)) return setMessages([])
-    setMessages(d.map(mapMsg))
-  }
 
   useEffect(() => { bottomRef.current?.scrollIntoView({ behavior: 'smooth' }) }, [messages])
 
@@ -299,7 +298,7 @@ export default function CustomerChatPage() {
                 <div style={{ textAlign: 'center', color: 'var(--text2)', marginTop: 80 }}>
                   {msgSearch ? 'Хайлтад тохирох мессеж олдсонгүй' : 'Одоогоор мессеж алга. Сайн уу? гэж эхлээрэй.'}
                 </div>
-              ) : displayMessages.map((m) => {
+              ) : displayMessages.map((m, mi) => {
                 const mine = me && (m.sender_id === me.id)
                 // Parse reply
                 const replyMatch = m.message.match(/^\[REPLY:(.+?):(.+?)\]\n([\s\S]*)$/)
@@ -307,7 +306,7 @@ export default function CustomerChatPage() {
                 const replyText = replyMatch?.[2]
                 const mainText = replyMatch ? replyMatch[3] : m.message
                 return (
-                  <div key={m.id || Math.random()} style={{
+                  <div key={m.id || `msg-${mi}`} style={{
                     alignSelf: mine ? 'flex-end' : 'flex-start',
                     maxWidth: '72%',
                     position: 'relative',

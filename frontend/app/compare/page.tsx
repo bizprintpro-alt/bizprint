@@ -8,13 +8,14 @@ const fmt = (n: number) => '₮' + n.toLocaleString('mn-MN')
 export default function ComparePage() {
   const { compare, toggleCompare, clearCompare } = useStore()
   const [products, setProducts] = useState<any[]>([])
-  const [loading, setLoading] = useState(true)
+  const [loaded, setLoaded] = useState(false)
+  const loading = compare.length > 0 && !loaded
 
   useEffect(() => {
-    if (!compare.length) { setLoading(false); return }
+    if (!compare.length) return
     apiFetch<any>('/products', { auth: false }).then(all => {
       if (Array.isArray(all)) setProducts(all.filter((p: any) => compare.includes(p.id)))
-    }).catch(() => {}).finally(() => setLoading(false))
+    }).catch(() => {}).finally(() => setLoaded(true))
   }, [compare])
 
   // Collect all spec keys

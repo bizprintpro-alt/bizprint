@@ -43,7 +43,6 @@ export default function CreatorPortfolioPage() {
   const fileRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
-    setLoading(true)
     Promise.all([
       apiFetch<PortfolioItem[]>('/creator/portfolio').catch(() => []),
       apiFetch<CreatorStats>('/creator/stats').catch(() => stats),

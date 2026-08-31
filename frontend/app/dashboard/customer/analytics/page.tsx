@@ -14,17 +14,18 @@ const EVENT_LABELS: Record<string, string> = {
 export default function AnalyticsDashboard() {
   const [stats, setStats] = useState<any>(null)
   const [days, setDays] = useState(30)
-  const [loading, setLoading] = useState(true)
+  const [loadedDays, setLoadedDays] = useState<number | null>(null)
+  const loading = loadedDays !== days
 
   useEffect(() => {
-    setLoading(true)
     const token = localStorage.getItem('access_token') || localStorage.getItem('token')
-    if (!token) { setLoading(false); return }
-    fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000'}/analytics/my?days=${days}`, { headers: { Authorization: `Bearer ${token}` } })
-      .then(r => r.ok ? r.json() : null)
-      .then(d => setStats(d))
-      .catch(() => {})
-      .finally(() => setLoading(false))
+    const request = token
+      ? fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000'}/analytics/my?days=${days}`, { headers: { Authorization: `Bearer ${token}` } })
+          .then(r => r.ok ? r.json() : null)
+          .then(d => { setStats(d) })
+          .catch(() => {})
+      : Promise.resolve()
+    request.finally(() => setLoadedDays(days))
   }, [days])
 
   if (loading) return <div style={{ padding: 40, textAlign: 'center', fontFamily: FONT, color: '#9CA3AF' }}>Ачааллаж байна...</div>
